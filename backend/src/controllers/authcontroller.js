@@ -3,13 +3,6 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const redisClient = require('../config/redis');
 
-// Cross-domain (Vercel frontend + Render backend) cookies need
-// sameSite: 'none' + secure in production; 'lax' without secure for local
-// http dev. Shared by login (sets the cookie) and logout (must clear it
-// with matching attributes, or the browser won't recognize it as the same
-// cookie and it'll silently fail to clear).
-const isProd = process.env.NODE_ENV === 'production';
-
 const login = async (req, res) => {
   try {
     let { email, password } = req.body;
@@ -48,8 +41,7 @@ const login = async (req, res) => {
     res.cookie('token', token, {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: isProd ? 'none' : 'lax',
-      secure: isProd
+      sameSite: 'lax'
     });
 
     return res.status(200).json({
@@ -93,11 +85,7 @@ const logout = async (req, res) => {
       }
     }
 
-    res.clearCookie('token', {
-      httpOnly: true,
-      sameSite: isProd ? 'none' : 'lax',
-      secure: isProd
-    });
+    res.clearCookie('token');
 
     return res.status(200).json({
       message: 'Logout successful'
